@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import MobileLayout from '../components/layouts/MobileLayout';
 import { useFlashcards } from '../hooks/useFlashcards';
@@ -17,26 +16,26 @@ interface Flashcard {
 }
 
 const Flashcards: React.FC = () => {
-  const { 
-    flashcards, 
-    modules, 
-    isLoading, 
-    activeModule, 
+  const {
+    flashcards,
+    modules,
+    isLoading,
+    activeModule,
     setActiveModule,
-    createFlashcard, 
-    updateFlashcard, 
-    deleteFlashcard 
+    createFlashcard,
+    updateFlashcard,
+    deleteFlashcard
   } = useFlashcards();
-  
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingFlashcard, setEditingFlashcard] = useState<Flashcard | null>(null);
   const [currentView, setCurrentView] = useState<'list' | 'study'>('list');
-  
+
   const handleEditFlashcard = (flashcard: Flashcard) => {
     setEditingFlashcard(flashcard);
     setShowCreateForm(true);
   };
-  
+
   const handleFormSubmit = async (question: string, answer: string, moduleId: string | null) => {
     if (editingFlashcard) {
       await updateFlashcard(editingFlashcard.id, question, answer, moduleId);
@@ -46,23 +45,23 @@ const Flashcards: React.FC = () => {
     }
     setShowCreateForm(false);
   };
-  
+
   const handleCancelForm = () => {
     setShowCreateForm(false);
     setEditingFlashcard(null);
   };
-  
+
   const handleToggleView = () => {
     setCurrentView(currentView === 'list' ? 'study' : 'list');
   };
-  
+
   return (
     <MobileLayout title="Flashcards">
       <div className="py-4">
         <div className="w-full">
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Flashcards</h1>
-            
+
             <div className="flex flex-col gap-3">
               <button
                 onClick={handleToggleView}
@@ -80,7 +79,7 @@ const Flashcards: React.FC = () => {
                   </>
                 )}
               </button>
-              
+
               {currentView === 'list' && (
                 <button
                   onClick={() => setShowCreateForm(true)}
@@ -93,7 +92,7 @@ const Flashcards: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           {isLoading ? (
             <div className="text-center py-8">
               <p className="text-gray-500">Loading flashcards...</p>

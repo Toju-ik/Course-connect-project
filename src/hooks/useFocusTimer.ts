@@ -1,90 +1,110 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from './use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { addStudySession } from '@/utils/studyTracker';
 
 type TimerStatus = 'idle' | 'running' | 'paused' | 'completed';
 
 export const useFocusTimer = () => {
-  const [duration, setDuration] = useState<number>(25 * 60); // Default: 25 minutes in seconds
+  const [duration, setDuration] = useState<number>(25 * 60);
   const [timeLeft, setTimeLeft] = useState<number>(duration);
   const [status, setStatus] = useState<TimerStatus>('idle');
-  const [coins, setCoins] = useState<number>(0);
+  const [coins, setCoins] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('coins');
+      return stored ? parseInt(stored) : 0;
+    }
+    return 0;
+  });
+
   const intervalRef = useRef<number | null>(null);
   const { toast } = useToast();
-  
-  // Clean up interval on unmount
+  const { user } = useAuth();
+
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
+      if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, []);
-  
-  // Reset timer when duration changes
+
   useEffect(() => {
-    if (status === 'idle') {
-      setTimeLeft(duration);
-    }
+    if (status === 'idle') setTimeLeft(duration);
   }, [duration, status]);
 
   const startTimer = () => {
-    if (status === 'idle' || status === 'paused') {
-      setStatus('running');
-      
-      // Clear any existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      
-      // Set up a new interval
-      intervalRef.current = window.setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            // Timer completed
-            clearInterval(intervalRef.current!);
-            setStatus('completed');
-            const earnedCoins = Math.floor(duration / 60); // 1 coin per minute
-            setCoins(prev => prev + earnedCoins);
-            toast({
-              title: "Study Session Completed!",
-              description: `You earned ${earnedCoins} coins! Great job!`,
-            });
-            return 0;
+    if (status !== 'idle' && status !== 'paused') return;
+
+    setStatus('running');
+
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    intervalRef.current = window.setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
           }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  };
-  
-  const pauseTimer = () => {
-    if (status === 'running') {
-      clearInterval(intervalRef.current!);
-      setStatus('paused');
-      toast({
-        title: "Timer Paused",
-        description: "Taking a short break is okay. Remember, consistency beats intensity!",
+
+          setStatus('completed');
+          const earnedCoins = Math.max(1, Math.floor(duration / 60));
+
+          setCoins((prevCoins) => {
+            const updated = prevCoins + earnedCoins;
+            localStorage.setItem('coins', updated.toString());
+            return updated;
+          });
+
+          if (user) {
+            addStudySession(user.id, duration, earnedCoins);
+          }
+
+          toast({
+            title: 'Study Session Completed!',
+            description: `You earned ${earnedCoins} coins! Great job!`,
+          });
+
+          return 0;
+        }
+
+        return prev - 1;
       });
-    }
+    }, 1000);
   };
-  
+
+  const pauseTimer = () => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setStatus('paused');
+    toast({
+      title: 'Timer Paused',
+      description: 'Taking a short break is okay. Remember, consistency beats intensity!',
+    });
+  };
+
   const resumeTimer = () => {
-    if (status === 'paused') {
-      startTimer();
-    }
+    if (status === 'paused') startTimer();
   };
-  
+
   const stopTimer = () => {
-    clearInterval(intervalRef.current!);
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setStatus('idle');
     setTimeLeft(duration);
   };
-  
-  const resetTimer = () => {
-    stopTimer();
-  };
-  
+
+  const resetTimer = () => stopTimer();
+
   const updateDuration = (minutes: number) => {
     if (status === 'idle') {
       const newDuration = minutes * 60;
@@ -92,14 +112,13 @@ export const useFocusTimer = () => {
       setTimeLeft(newDuration);
     }
   };
-  
-  // Format seconds to MM:SS
-  const formatTime = (timeInSeconds: number): string => {
-    const minutes = Math.floor(timeInSeconds / 60);
-    const seconds = timeInSeconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
-  
+
   return {
     timeLeft,
     formattedTime: formatTime(timeLeft),

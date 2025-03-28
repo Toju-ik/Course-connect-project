@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Edit, Trash } from "lucide-react";
 
 interface Flashcard {
@@ -37,6 +37,12 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const [flippedStates, setFlippedStates] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    setFlippedStates(flashcards.map(() => false));
+  }, [flashcards]);
+
   const getModuleName = (moduleId: string | null | undefined) => {
     if (!moduleId) return "Uncategorized";
     const module = modules.find((m) => m.id === moduleId);
@@ -56,58 +62,80 @@ const FlashcardsList: React.FC<FlashcardsListProps> = ({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {flashcards.map((flashcard, index) => {
-        const [flipped, setFlipped] = useState(false);
-        const bgColor = colorMap[index % colorMap.length];
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600 font-medium mb-2">
+        Total Flashcards: {flashcards.length}
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {flashcards.map((flashcard, index) => {
+          const flipped = flippedStates[index];
+          const bgColor = colorMap[index % colorMap.length];
 
-        return (
-          <div
-            key={flashcard.id}
-            className="perspective h-48 cursor-pointer"
-            onClick={() => setFlipped(!flipped)}
-          >
-            <div className={`flip-container w-full h-full ${flipped ? "flipped" : ""}`}>
-              {/* Front */}
-              <div className={`flashcard-side flashcard-front ${bgColor} lined-paper`}>
-                <h3 className="text-lg font-semibold text-gray-800">
-                  {flashcard.question}
-                </h3>
-                <p className="mt-3 text-xs text-gray-700 italic">
-                  {getModuleName(flashcard.module_id)}
-                </p>
-              </div>
+          const toggleFlip = () => {
+            const updated = [...flippedStates];
+            updated[index] = !updated[index];
+            setFlippedStates(updated);
+          };
 
-              {/* Back */}
-              <div className="flashcard-side flashcard-back bg-white lined-paper">
-                <p className="text-gray-800 text-sm">{flashcard.answer}</p>
-                <div className="flex justify-end items-center gap-2 mt-4">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(flashcard);
-                    }}
-                    className="text-gray-500 hover:text-primary"
-                    aria-label="Edit"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(flashcard.id);
-                    }}
-                    className="text-gray-500 hover:text-red-500"
-                    aria-label="Delete"
-                  >
-                    <Trash className="w-4 h-4" />
-                  </button>
+          return (
+            <div
+              key={flashcard.id}
+              className="perspective h-48 cursor-pointer"
+              onClick={toggleFlip}
+            >
+              <div
+                className={`flip-container w-full h-full ${
+                  flipped ? "flipped" : ""
+                }`}
+              >
+                {/* Front */}
+                <div
+                  className={`flashcard-side flashcard-front ${bgColor} lined-paper`}
+                >
+                  <div className="flex justify-between items-start">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {flashcard.question}
+                    </h3>
+                    <span className="text-xs text-gray-500 font-semibold">
+                      #{index + 1}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-xs text-gray-700 italic">
+                    {getModuleName(flashcard.module_id)}
+                  </p>
+                </div>
+
+                {/* Back */}
+                <div className="flashcard-side flashcard-back bg-white lined-paper">
+                  <p className="text-gray-800 text-sm">{flashcard.answer}</p>
+                  <div className="flex justify-end items-center gap-2 mt-4">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(flashcard);
+                      }}
+                      className="text-gray-500 hover:text-primary"
+                      aria-label="Edit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(flashcard.id);
+                      }}
+                      className="text-gray-500 hover:text-red-500"
+                      aria-label="Delete"
+                    >
+                      <Trash className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };

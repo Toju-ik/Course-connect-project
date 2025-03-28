@@ -1,4 +1,3 @@
-
 import { Home, ListTodo, Timer, BookOpen, BarChart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -7,9 +6,7 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  const isActive = (path: string) => {
-    return currentPath === path;
-  };
+  const isActive = (path: string) => currentPath === path;
 
   const navItems = [
     { icon: Home, label: "Home", path: "/dashboard" },
@@ -20,20 +17,27 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-indigo-600 border-t border-indigo-700">
       <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-              isActive(item.path) ? "text-primary" : "text-gray-500"
-            }`}
-          >
-            <item.icon className={`w-5 h-5 ${isActive(item.path) ? "text-primary" : "text-gray-500"}`} />
-            <span className="text-xs font-medium">{item.label}</span>
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const active = isActive(item.path);
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`flex flex-col items-center justify-center w-full h-full transition-all ${
+                active ? "text-white font-semibold scale-105" : "text-indigo-200"
+              }`}
+            >
+              <item.icon
+                className={`w-6 h-6 transition-colors ${
+                  active ? "text-white" : "text-indigo-200"
+                }`}
+              />
+              <span className="text-xs mt-1">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

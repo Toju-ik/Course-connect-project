@@ -52,9 +52,10 @@ export function useTaskFetch() {
         title: task.title,
         description: task.description,
         status: task.status as "todo" | "in-progress" | "completed",
-        module: task.module_id,
+        module_id: task.module_id,
         dueDate: task.due_date,
-        priority: task.priority as "low" | "medium" | "high" | undefined
+        priority: task.priority as "low" | "medium" | "high" | undefined,
+        taskType: task.task_type // Include taskType from database
       })) : [];
       
       setTasks(formattedTasks);

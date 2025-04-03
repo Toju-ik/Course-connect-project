@@ -1,6 +1,8 @@
+// src/hooks/useFocusTimer.tsx
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from './use-toast';
 import { useStudySessions } from './useStudySessions';
+import { useGamification } from './useGamification';
 
 type TimerStatus = 'idle' | 'running' | 'paused' | 'completed';
 
@@ -13,11 +15,10 @@ interface TimerState {
 }
 
 export const useFocusTimer = () => {
-  const DEFAULT_DURATION = 25 * 60;
+  const DEFAULT_DURATION = 25 * 60; // 25 minutes in seconds
   const [duration, setDuration] = useState<number>(DEFAULT_DURATION);
   const [timeLeft, setTimeLeft] = useState<number>(DEFAULT_DURATION);
   const [status, setStatus] = useState<TimerStatus>('idle');
-  const [coins, setCoins] = useState<number>(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
@@ -26,7 +27,9 @@ export const useFocusTimer = () => {
   const alarmSoundRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
   const { logTimerSession } = useStudySessions();
+  const { awardFocusSessionCoins, coins, updateCoinBalance } = useGamification();
 
+  
   useEffect(() => {
     alarmSoundRef.current = new Audio('/notification.mp3');
     return () => {
@@ -35,19 +38,22 @@ export const useFocusTimer = () => {
       }
     };
   }, []);
+
+  
   useEffect(() => {
     const savedStateStr = localStorage.getItem('focusTimerState');
     if (savedStateStr) {
       try {
         const savedState: TimerState = JSON.parse(savedStateStr);
         console.log('Loading saved timer state:', savedState);
-
+        
         if (savedState.status === 'running' && savedState.startTime) {
+          
           const elapsed = Math.floor((Date.now() - savedState.startTime) / 1000);
           const remaining = savedState.duration - elapsed;
-
+          
           console.log(`Timer was running. Elapsed: ${elapsed}s, Remaining: ${remaining}s`);
-
+          
           if (remaining > 0) {
             setTimeLeft(remaining);
             setDuration(savedState.duration);
@@ -85,8 +91,10 @@ export const useFocusTimer = () => {
     }
   }, []);
 
+ 
   useEffect(() => {
     const now = Date.now();
+    
     if (now - lastSaveTimeRef.current >= 1000) {
       const timerState: TimerState = {
         startTime: startTimeRef.current,
@@ -95,19 +103,21 @@ export const useFocusTimer = () => {
         status: status,
         activeModule: activeModule,
       };
-
+      
       localStorage.setItem('focusTimerState', JSON.stringify(timerState));
       lastSaveTimeRef.current = now;
     }
   }, [timeLeft, duration, status, activeModule]);
 
+  
   useEffect(() => {
     if (status === 'running') {
       intervalRef.current = window.setInterval(() => {
+   
         if (startTimeRef.current) {
           const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
           const remaining = duration - elapsed;
-
+          
           setTimeLeft((prev) => {
             if (remaining <= 0) {
               if (intervalRef.current) clearInterval(intervalRef.current);
@@ -126,50 +136,74 @@ export const useFocusTimer = () => {
     };
   }, [status, duration]);
 
+  
   const handleTimerCompletion = () => {
-    console.log('Timer completed');
+    console.log('[FocusTimer] Timer completed');
     setStatus('completed');
-
+    
+   
     if (alarmSoundRef.current) {
-      console.log('Playing alarm sound');
+      console.log('[FocusTimer] Playing alarm sound');
       alarmSoundRef.current.play().catch(error => {
-        console.error('Error playing alarm sound:', error);
+        console.error('[FocusTimer] Error playing alarm sound:', error);
       });
     }
-
-    const earnedCoins = Math.floor(duration / 60);
-    setCoins((prevCoins) => prevCoins + earnedCoins);
-
+    
+    
+    const earnedMinutes = Math.ceil(duration / 60);
+    console.log(`[FocusTimer] Earned minutes: ${earnedMinutes}, awarding coins`);
+    
+  
     toast({
       title: 'Study Session Completed!',
-      description: `You earned ${earnedCoins} coins! Great job!`,
+      description: `You earned ${earnedMinutes} coins! Great job!`,
       variant: "default",
     });
-
+    
+    
+    awardFocusSessionCoins(earnedMinutes)
+      .then(success => {
+        if (success) {
+          console.log(`[FocusTimer] Successfully awarded ${earnedMinutes} coins for study session`);
+         
+          updateCoinBalance().then(() => {
+            console.log('[FocusTimer] Coin balance updated in UI after award');
+          });
+        } else {
+          console.error('[FocusTimer] Failed to award coins for focus timer session');
+        }
+      })
+      .catch(error => {
+        console.error('[FocusTimer] Error awarding coins:', error);
+      });
+    
+   
     const timeInMinutes = Math.ceil(duration / 60);
     logTimerSession(timeInMinutes, activeModule)
       .then(result => {
-        console.log('Study session automatically recorded:', result);
+        console.log('[FocusTimer] Study session automatically recorded:', result);
       })
       .catch(error => {
-        console.error('Failed to record study session:', error);
+        console.error('[FocusTimer] Failed to record study session:', error);
       });
   };
 
   const startTimer = () => {
     if (status === 'idle' || status === 'paused') {
       const now = Date.now();
-
+      
       if (status === 'idle') {
+        
         setStartTime(now);
         startTimeRef.current = now;
         setTimeLeft(duration);
       } else if (status === 'paused') {
+       
         const newStartTime = now - (duration - timeLeft) * 1000;
         setStartTime(newStartTime);
         startTimeRef.current = newStartTime;
       }
-
+      
       setStatus('running');
       console.log(`Timer started with module: ${activeModule}, duration: ${duration}s`);
     }
@@ -189,6 +223,7 @@ export const useFocusTimer = () => {
 
   const resumeTimer = () => {
     if (status === 'paused') {
+   
       const now = Date.now();
       const newStartTime = now - (duration - timeLeft) * 1000;
       setStartTime(newStartTime);
@@ -220,6 +255,7 @@ export const useFocusTimer = () => {
       console.log(`Timer duration updated to ${minutes} minutes (${newDuration} seconds)`);
     }
   };
+
 
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);

@@ -7,6 +7,7 @@ export type Step = "welcome" | "account" | "department" | "course" | "details" |
 export interface FormData {
   studentId: string;
   password: string;
+  phoneNumber?: string;
   departmentId: string;
   departmentName: string;
   selectedCourse: string;    // This will store the course code
@@ -34,6 +35,7 @@ export const getInitialFormData = (): FormData => {
   return {
     studentId: "",
     password: "",
+    phoneNumber: "",
     departmentId: "",
     departmentName: "",
     selectedCourse: "",
@@ -56,6 +58,7 @@ export const getStoredFormData = (): FormData => {
       console.log("Retrieved stored form data:", parsedData);
       return {
         ...parsedData,
+        phoneNumber: parsedData.phoneNumber || "",
         academicYear: parsedData.academicYear || "",
         semester: parsedData.semester || "",
         moduleGroup: parsedData.moduleGroup || "",

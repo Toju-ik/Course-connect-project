@@ -41,18 +41,24 @@ const ModuleSelection = ({
       try {
         setIsLoading(true);
         
+        // Create initial query
         let query = supabase
           .from("course_modules")
           .select("*")
-          .eq("semester", semester)
-          .eq("academic_year", academicYear);
+          .eq("semester", semester);
           
+        // Convert academicYear to a number for comparison with database
+        const academicYearNum = parseInt(academicYear, 10);
+        if (!isNaN(academicYearNum)) {
+          query = query.eq("academic_year", academicYearNum);
+        }
+        
         if (courseId) {
           query = query.eq("course_id", courseId);
         }
         
         if (moduleGroup !== "None") {
-          query = query.eq("group_name", moduleGroup);
+          query = query.eq("course_module_group", moduleGroup);
         }
         
         const { data, error } = await query;

@@ -11,9 +11,9 @@ interface MobileLayoutProps {
 
 const MobileLayout = ({ children, title, showBackButton = false }: MobileLayoutProps) => {
   return (
-    <div className="flex flex-col min-h-screen w-full bg-white">
+    <div className="flex flex-col min-h-screen w-full bg-gray-50">
       <MobileHeader title={title} showBackButton={showBackButton} />
-      <main className={`flex-1 ${showBackButton ? 'pt-16' : 'pt-32'} pb-16 px-4 overflow-y-auto`}>
+      <main className="flex-1 pt-16 pb-16 px-4 overflow-y-auto">
         {children}
       </main>
       <BottomNavigation />

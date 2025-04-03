@@ -6,9 +6,10 @@ interface Task {
   title: string;
   description: string;
   status: "todo" | "in-progress" | "completed";
-  module?: string;
+  module_id?: string;
   dueDate?: string;
   priority?: "low" | "medium" | "high";
+  taskType?: string;
 }
 
 interface KanbanColumnProps {
@@ -16,15 +17,11 @@ interface KanbanColumnProps {
   count: number;
   status: "todo" | "in-progress" | "completed";
   tasks: Task[];
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
-  onDragEnd: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
-  onTouchStart?: (e: React.TouchEvent, taskId: string) => void;
-  onTouchMove?: (e: React.TouchEvent) => void;
-  onTouchEnd?: (e: React.TouchEvent, taskId: string) => void;
+  onMoveTask: (taskId: string) => void;
+  onMoveAllTasks: (status: string) => void;
+  isLastColumn: boolean;
   isHighlighted: boolean;
 }
 
@@ -33,15 +30,11 @@ const KanbanColumn = ({
   count,
   status,
   tasks,
-  onDragStart,
-  onDragEnd,
-  onDragOver,
-  onDrop,
   onEditTask,
   onDeleteTask,
-  onTouchStart,
-  onTouchMove,
-  onTouchEnd,
+  onMoveTask,
+  onMoveAllTasks,
+  isLastColumn,
   isHighlighted
 }: KanbanColumnProps) => {
   return (
@@ -50,11 +43,8 @@ const KanbanColumn = ({
         isHighlighted 
           ? "border-2 border-primary/50 bg-primary/5" 
           : "border border-gray-200 bg-gray-50/80"
-      } backdrop-blur-[2px] transition-all duration-200 kanban-column`}
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      } backdrop-blur-[2px] transition-all duration-200 kanban-column snap-center min-w-[85vw] md:min-w-[300px] md:w-1/3 shrink-0`}
       data-column-id={status}
-      onTouchMove={onTouchMove}
     >
       <div className="p-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
@@ -72,18 +62,17 @@ const KanbanColumn = ({
               <KanbanCard
                 key={task.id}
                 task={task}
-                onDragStart={onDragStart}
-                onDragEnd={onDragEnd}
                 onEdit={() => onEditTask(task)}
                 onDelete={() => onDeleteTask(task.id)}
-                onTouchStart={onTouchStart ? (e) => onTouchStart(e, task.id) : undefined}
-                onTouchEnd={onTouchEnd ? (e) => onTouchEnd(e, task.id) : undefined}
+                onMoveTask={onMoveTask}
+                onMoveAllTasks={onMoveAllTasks}
+                isLastColumn={isLastColumn}
               />
             ))
           ) : (
             <div className="flex flex-col items-center justify-center h-24 text-center text-sm text-gray-500 border border-dashed border-gray-300 rounded-lg p-4 mt-2">
               <p>No tasks</p>
-              <p className="text-xs mt-1">Drag and drop tasks here</p>
+              <p className="text-xs mt-1">Add a task or move tasks here</p>
             </div>
           )}
         </div>

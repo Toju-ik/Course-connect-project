@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -44,11 +43,12 @@ const Register = () => {
     console.log("Starting new registration - form data reset");
   };
 
-  const handleAccountDetailsSubmit = (studentId: string, password: string) => {
+  const handleAccountDetailsSubmit = (studentId: string, password: string, phoneNumber: string) => {
     setFormData(prev => ({
       ...prev,
       studentId,
-      password
+      password,
+      phoneNumber
     }));
     setCurrentStep("department");
   };
@@ -162,7 +162,8 @@ const Register = () => {
               <AccountDetails 
                 initialValues={{
                   studentId: formData.studentId,
-                  password: formData.password
+                  password: formData.password,
+                  phoneNumber: formData.phoneNumber
                 }}
                 onSubmit={handleAccountDetailsSubmit} 
               />

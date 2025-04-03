@@ -1,15 +1,14 @@
-
 import { useState, useEffect } from "react";
 import { Calendar, ChevronDown, Clock, CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
 import { useTimetable } from "../../contexts/TimetableContext";
-import { useTasks, Task } from "../../hooks/useTasks";
+import { useTasks, Task, Module } from "../../hooks/useTasks";
 import { motion } from "framer-motion";
 
 const TodaySchedule = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [activeDay, setActiveDay] = useState(0);
   const { modules, isLoading: timetableLoading } = useTimetable();
-  const { tasks, isLoading: tasksLoading } = useTasks();
+  const { tasks, userModules, isLoading: tasksLoading } = useTasks();
   
   // Get weekday names
   const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -83,6 +82,13 @@ const TodaySchedule = () => {
       default:
         return { icon: <CheckCircle className="w-4 h-4 text-gray-500" />, bg: 'bg-gray-50', text: 'text-gray-700' };
     }
+  };
+  
+  // Find module name from module_id
+  const getModuleNameById = (moduleId?: string) => {
+    if (!moduleId) return "";
+    const foundModule = userModules.find(mod => mod.id === moduleId);
+    return foundModule ? `${foundModule.code}` : "";
   };
   
   const isLoading = timetableLoading || tasksLoading;
@@ -177,6 +183,7 @@ const TodaySchedule = () => {
                       
                       {isToday && dayTasks.map((task) => {
                         const priorityInfo = getPriorityInfo(task.priority);
+                        const moduleName = getModuleNameById(task.module_id);
                         return (
                           <div
                             key={task.id}
@@ -193,9 +200,9 @@ const TodaySchedule = () => {
                                     </span>
                                   )}
                                 </h4>
-                                {task.module && (
+                                {moduleName && (
                                   <p className="text-sm text-gray-600 mt-1">
-                                    Module: {task.module}
+                                    Module: {moduleName}
                                   </p>
                                 )}
                                 <p className="text-sm text-gray-600 mt-1">

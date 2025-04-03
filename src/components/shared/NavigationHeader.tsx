@@ -8,6 +8,7 @@ interface NavigationHeaderProps {
   showBackButton?: boolean;
   onBack?: () => void;
   showCancelButton?: boolean;
+  backPath?: string;
 }
 
 const NavigationHeader = ({
@@ -15,6 +16,7 @@ const NavigationHeader = ({
   showBackButton = false,
   onBack,
   showCancelButton = true,
+  backPath,
 }: NavigationHeaderProps) => {
   const navigate = useNavigate();
 
@@ -25,12 +27,22 @@ const NavigationHeader = ({
     navigate("/login");
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (backPath) {
+      navigate(backPath);
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
       <div>
         {showBackButton ? (
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="flex items-center text-gray-600"
           >
             <ArrowLeft className="h-5 w-5 mr-1" />

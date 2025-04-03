@@ -1,18 +1,21 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import KanbanColumn from "./KanbanColumn";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Archive, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 
 interface Task {
   id: string;
   title: string;
   description: string;
   status: "todo" | "in-progress" | "completed";
-  module?: string;
+  module_id?: string;
   dueDate?: string;
   priority?: "low" | "medium" | "high";
+  taskType?: string;
 }
 
 interface KanbanBoardProps {
@@ -27,169 +30,74 @@ interface KanbanBoardProps {
 }
 
 const KanbanBoard = ({ tasks, onTaskMove, onEditTask, onDeleteTask }: KanbanBoardProps) => {
-  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
   const [deleteTaskId, setDeleteTaskId] = useState<string | null>(null);
   const [hoveringColumn, setHoveringColumn] = useState<string | null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const autoScrollInterval = useRef<NodeJS.Timeout | null>(null);
-  const touchY = useRef<number | null>(null);
+  const { toast } = useToast();
 
-  // Clear any auto-scroll interval when component unmounts
-  useEffect(() => {
-    return () => {
-      if (autoScrollInterval.current) {
-        clearInterval(autoScrollInterval.current);
-      }
+  // Array of status options to determine next status
+  const statusSequence: ["todo", "in-progress", "completed"] = ["todo", "in-progress", "completed"];
+
+  // Function to determine the next status in the sequence
+  const getNextStatus = (currentStatus: string): "todo" | "in-progress" | "completed" => {
+    const currentIndex = statusSequence.indexOf(currentStatus as "todo" | "in-progress" | "completed");
+    if (currentIndex === -1 || currentIndex === statusSequence.length - 1) {
+      return currentStatus as "todo" | "in-progress" | "completed";
+    }
+    return statusSequence[currentIndex + 1];
+  };
+
+  // Handle moving a single task to the next column
+  const handleMoveTask = (taskId: string) => {
+    const findTask = (id: string): Task | undefined => {
+      return [
+        ...tasks.todo,
+        ...tasks["in-progress"],
+        ...tasks.completed
+      ].find(task => task.id === id);
     };
-  }, []);
 
-  // Handle auto-scrolling when dragging near edges
-  const startAutoScroll = (direction: 'up' | 'down') => {
-    if (autoScrollInterval.current) {
-      clearInterval(autoScrollInterval.current);
-    }
-    
-    autoScrollInterval.current = setInterval(() => {
-      if (boardRef.current) {
-        boardRef.current.scrollBy({
-          top: direction === 'up' ? -10 : 10,
-          behavior: 'smooth'
-        });
-      }
-    }, 20);
-  };
+    const task = findTask(taskId);
+    if (!task) return;
 
-  const stopAutoScroll = () => {
-    if (autoScrollInterval.current) {
-      clearInterval(autoScrollInterval.current);
-      autoScrollInterval.current = null;
+    const nextStatus = getNextStatus(task.status);
+    if (nextStatus !== task.status) {
+      onTaskMove(taskId, nextStatus);
+      toast({
+        title: "Task Moved",
+        description: `Task "${task.title}" moved to ${
+          nextStatus === "todo" ? "To Do" : 
+          nextStatus === "in-progress" ? "In Progress" : 
+          "Completed"
+        }`,
+      });
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, taskId: string) => {
-    e.dataTransfer.setData("taskId", taskId);
-    setDraggingTaskId(taskId);
-    
-    // For better mobile drag visualization
-    if (e.target instanceof HTMLElement) {
-      const clone = e.target.cloneNode(true) as HTMLElement;
-      clone.style.opacity = '0.6';
-      document.body.appendChild(clone);
-      e.dataTransfer.setDragImage(clone, 0, 0);
-      setTimeout(() => {
-        document.body.removeChild(clone);
-      }, 0);
-    }
-    
-    // Add a slight delay for visual effect
-    setTimeout(() => {
-      const element = document.getElementById(`task-${taskId}`);
-      if (element) {
-        element.classList.add("dragging");
-      }
-    }, 0);
-  };
+  // Handle moving all tasks in a column to the next column
+  const handleMoveAllTasks = (currentStatus: string) => {
+    const nextStatus = getNextStatus(currentStatus);
+    if (nextStatus === currentStatus) return;
 
-  const handleDragEnd = (e: React.DragEvent) => {
-    setDraggingTaskId(null);
-    setHoveringColumn(null);
-    stopAutoScroll();
-    
-    const elements = document.querySelectorAll(".dragging");
-    elements.forEach(el => el.classList.remove("dragging"));
-  };
+    const tasksToMove = 
+      currentStatus === "todo" ? tasks.todo :
+      currentStatus === "in-progress" ? tasks["in-progress"] : 
+      tasks.completed;
 
-  const handleDragOver = (e: React.DragEvent, columnId: string) => {
-    e.preventDefault();
-    setHoveringColumn(columnId);
-    
-    // Auto-scroll when dragging near the top or bottom of the container
-    if (boardRef.current) {
-      const boardRect = boardRef.current.getBoundingClientRect();
-      const scrollThreshold = 50; // Pixels from edge to trigger auto-scroll
-      
-      if (e.clientY - boardRect.top < scrollThreshold) {
-        startAutoScroll('up');
-      } else if (boardRect.bottom - e.clientY < scrollThreshold) {
-        startAutoScroll('down');
-      } else {
-        stopAutoScroll();
-      }
-    }
-  };
+    if (tasksToMove.length === 0) return;
 
-  const handleDrop = (e: React.DragEvent, columnId: "todo" | "in-progress" | "completed") => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData("taskId");
-    onTaskMove(taskId, columnId);
-    setHoveringColumn(null);
-    stopAutoScroll();
-  };
+    // Move each task to the next status
+    tasksToMove.forEach(task => {
+      onTaskMove(task.id, nextStatus);
+    });
 
-  // Mobile touch handlers
-  const handleTouchStart = (e: React.TouchEvent, taskId: string) => {
-    touchY.current = e.touches[0].clientY;
-    // We'll delay setting the dragging state to avoid triggering it on simple taps
-    setTimeout(() => {
-      if (touchY.current !== null) {
-        setDraggingTaskId(taskId);
-        const element = document.getElementById(`task-${taskId}`);
-        if (element) {
-          element.classList.add("touch-dragging");
-        }
-      }
-    }, 200);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (draggingTaskId && touchY.current !== null) {
-      const currentY = e.touches[0].clientY;
-      const deltaY = currentY - touchY.current;
-      
-      // Auto-scroll logic for touch
-      if (boardRef.current) {
-        const boardRect = boardRef.current.getBoundingClientRect();
-        const scrollThreshold = 80; // Larger threshold for touch
-        
-        if (currentY - boardRect.top < scrollThreshold) {
-          boardRef.current.scrollBy({ top: -5, behavior: 'smooth' });
-        } else if (boardRect.bottom - currentY < scrollThreshold) {
-          boardRef.current.scrollBy({ top: 5, behavior: 'smooth' });
-        }
-      }
-      
-      // Determine which column we're hovering over based on elements under the touch point
-      const elementsAtPoint = document.elementsFromPoint(
-        e.touches[0].clientX, 
-        e.touches[0].clientY
-      );
-      
-      for (const element of elementsAtPoint) {
-        if (element.classList.contains('kanban-column')) {
-          const columnId = element.getAttribute('data-column-id');
-          if (columnId) {
-            setHoveringColumn(columnId);
-            break;
-          }
-        }
-      }
-      
-      touchY.current = currentY;
-    }
-  };
-
-  const handleTouchEnd = (e: React.TouchEvent, taskId: string) => {
-    if (draggingTaskId === taskId && hoveringColumn) {
-      // Only move if we have a valid target column
-      onTaskMove(taskId, hoveringColumn as "todo" | "in-progress" | "completed");
-    }
-    
-    touchY.current = null;
-    setDraggingTaskId(null);
-    setHoveringColumn(null);
-    
-    const elements = document.querySelectorAll(".touch-dragging");
-    elements.forEach(el => el.classList.remove("touch-dragging"));
+    toast({
+      title: "Tasks Moved",
+      description: `${tasksToMove.length} tasks moved to ${
+        nextStatus === "todo" ? "To Do" : 
+        nextStatus === "in-progress" ? "In Progress" : 
+        "Completed"
+      }`,
+    });
   };
 
   const handleDeleteClick = (taskId: string) => {
@@ -208,25 +116,18 @@ const KanbanBoard = ({ tasks, onTaskMove, onEditTask, onDeleteTask }: KanbanBoar
   };
 
   return (
-    <div 
-      ref={boardRef}
-      className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 overflow-y-auto max-h-[calc(100vh-220px)]"
-    >
+    <div className="flex overflow-x-auto pb-4 gap-4 md:gap-6 overscroll-x-contain snap-x hide-scrollbar smooth-scroll">
       <KanbanColumn
         title="To Do"
         count={tasks.todo.length}
         status="todo"
         tasks={tasks.todo}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragOver={(e) => handleDragOver(e, "todo")}
-        onDrop={(e) => handleDrop(e, "todo")}
         onEditTask={onEditTask}
         onDeleteTask={handleDeleteClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        isHighlighted={hoveringColumn === "todo" && draggingTaskId !== null}
+        onMoveTask={handleMoveTask}
+        onMoveAllTasks={handleMoveAllTasks}
+        isLastColumn={false}
+        isHighlighted={hoveringColumn === "todo"}
       />
 
       <KanbanColumn
@@ -234,16 +135,12 @@ const KanbanBoard = ({ tasks, onTaskMove, onEditTask, onDeleteTask }: KanbanBoar
         count={tasks["in-progress"].length}
         status="in-progress"
         tasks={tasks["in-progress"]}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragOver={(e) => handleDragOver(e, "in-progress")}
-        onDrop={(e) => handleDrop(e, "in-progress")}
         onEditTask={onEditTask}
         onDeleteTask={handleDeleteClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        isHighlighted={hoveringColumn === "in-progress" && draggingTaskId !== null}
+        onMoveTask={handleMoveTask}
+        onMoveAllTasks={handleMoveAllTasks}
+        isLastColumn={false}
+        isHighlighted={hoveringColumn === "in-progress"}
       />
 
       <KanbanColumn
@@ -251,16 +148,12 @@ const KanbanBoard = ({ tasks, onTaskMove, onEditTask, onDeleteTask }: KanbanBoar
         count={tasks.completed.length}
         status="completed"
         tasks={tasks.completed}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragOver={(e) => handleDragOver(e, "completed")}
-        onDrop={(e) => handleDrop(e, "completed")}
         onEditTask={onEditTask}
         onDeleteTask={handleDeleteClick}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        isHighlighted={hoveringColumn === "completed" && draggingTaskId !== null}
+        onMoveTask={handleMoveTask}
+        onMoveAllTasks={handleMoveAllTasks}
+        isLastColumn={true}
+        isHighlighted={hoveringColumn === "completed"}
       />
 
       {/* Delete Confirmation Dialog */}

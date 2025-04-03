@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -17,7 +17,7 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 244 75% 95%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -59,57 +59,123 @@
   }
 }
 
-/* Kanban board touch handling styles */
-.dragging {
-  opacity: 0.6;
-  transform: scale(1.05) rotate(1deg);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 50;
+/* Container padding utility */
+.container-pad {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
 
-.touch-dragging {
-  opacity: 0.8;
-  transform: scale(1.05) rotate(1deg);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 50;
-  position: relative;
+/* Dropdown and popover styling */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important; /* Ensure high z-index */
 }
 
-.kanban-column {
-  touch-action: none; /* Prevent default browser touch actions */
+.dropdown-content,
+[role="menu"],
+[data-state="open"] {
+  @apply bg-white border border-gray-200 shadow-lg !important;
+  @apply backdrop-blur-none !important;
 }
 
-.perspective {
-  perspective: 1000px;
+/* Dialog overlay styling */
+[data-radix-dialog-overlay],
+[data-radix-alert-dialog-overlay],
+.dialog-overlay {
+  @apply bg-black/50 backdrop-blur-sm fixed inset-0 z-40;
 }
 
-.flip-container {
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-  position: relative;
+/* Dialog content styling */
+[data-radix-dialog-content],
+[data-radix-alert-dialog-content] {
+  @apply z-50 fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
 }
 
-.flipped {
-  transform: rotateY(180deg);
+/* Card styling with subtle shadow */
+.card {
+  @apply bg-white rounded-lg border border-gray-100 shadow-sm;
 }
 
-.flashcard-side {
-  backface-visibility: hidden;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+/* Gradient backgrounds */
+.gradient-hero {
+  @apply bg-gradient-to-b from-blue-50 to-white;
 }
 
-.flashcard-front {
-  z-index: 2;
+.gradient-accent {
+  @apply bg-gradient-to-br from-accent/50 to-white;
 }
 
-.flashcard-back {
-  transform: rotateY(180deg);
+.gradient-secondary {
+  @apply bg-gradient-to-br from-secondary to-white;
 }
 
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hover effects */
+.hover-scale {
+  @apply transition-transform duration-200 hover:scale-105;
+}
+
+/* Pulse animation for visual feedback */
+@keyframes pulse-border {
+  0%, 100% {
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    border-color: rgba(59, 130, 246, 0.8);
+  }
+}
+
+.pulse-border {
+  animation: pulse-border 2s infinite;
+}
+
+/* Kanban board horizontal scrolling styles */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Improved touch scrolling */
+@media (pointer: coarse) {
+  .overscroll-x-contain {
+    overscroll-behavior-x: contain;
+  }
+  
+  /* Enhance touch feedback */
+  .kanban-card {
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform, opacity;
+  }
+  
+  /* Better smooth scrolling on iOS */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}

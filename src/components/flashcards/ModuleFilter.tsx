@@ -1,11 +1,6 @@
 
 import React from 'react';
-
-interface Module {
-  id: string;
-  module_code: string;
-  module_title: string;
-}
+import { Module } from '../../types/module';
 
 interface ModuleFilterProps {
   modules: Module[];
@@ -28,7 +23,7 @@ const ModuleFilter: React.FC<ModuleFilterProps> = ({ modules, activeModule, onMo
         <option value="">All Flashcards</option>
         {modules.map((module) => (
           <option key={module.id} value={module.id}>
-            {module.module_code}: {module.module_title}
+            {module.code}: {module.name}
           </option>
         ))}
       </select>

@@ -40,11 +40,14 @@ const RegisterComplete = ({ formData }: RegisterCompleteProps) => {
       
       setLoading(true);
       try {
+        // Extract just the IDs from the selected modules
+        const moduleIds = formData.selectedModules.map(module => module.id);
+        
         // Fetch the module details for each selected module ID
         const { data, error } = await supabase
           .from("modules")
           .select("id, module_code, module_title, credits")
-          .in("id", formData.selectedModules);
+          .in("id", moduleIds);
           
         if (error) throw error;
         

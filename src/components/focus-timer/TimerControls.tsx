@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Play, Pause, RefreshCw, Square } from 'lucide-react';
+import { Play, Pause, Square, RefreshCw } from 'lucide-react';
 
 interface TimerControlsProps {
   status: 'idle' | 'running' | 'paused' | 'completed';
@@ -45,7 +45,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           className="flex items-center justify-center bg-green-500 text-white w-16 h-16 rounded-full hover:bg-green-600 transition-colors"
           aria-label="Resume timer"
         >
-          <RefreshCw className="w-8 h-8" />
+          <Play className="w-8 h-8" />
         </button>
       )}
       
@@ -65,7 +65,7 @@ const TimerControls: React.FC<TimerControlsProps> = ({
           className="flex items-center justify-center bg-primary text-white w-16 h-16 rounded-full hover:bg-primary-hover transition-colors"
           aria-label="Start new timer"
         >
-          <Play className="w-8 h-8" />
+          <RefreshCw className="w-8 h-8" />
         </button>
       )}
     </div>

@@ -13,8 +13,10 @@ interface StudySession {
 
 interface Module {
   id: string;
-  module_code: string;
-  module_title: string;
+  module_code?: string;
+  module_title?: string;
+  code?: string;
+  name?: string;
 }
 
 interface StudySessionsListProps {
@@ -33,7 +35,12 @@ const StudySessionsList: React.FC<StudySessionsListProps> = ({
   const getModuleName = (moduleId: string | null) => {
     if (!moduleId) return 'General Study';
     const module = modules.find(m => m.id === moduleId);
-    return module ? `${module.module_code}: ${module.module_title}` : 'Unknown Module';
+    if (!module) return 'Unknown Module';
+    
+    // Handle both types of module objects
+    const code = module.module_code || module.code || '';
+    const title = module.module_title || module.name || '';
+    return `${code}: ${title}`;
   };
   
   const formatDate = (dateString: string) => {

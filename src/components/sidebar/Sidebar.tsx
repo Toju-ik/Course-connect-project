@@ -15,8 +15,15 @@ const Sidebar = ({ isMobile = false, onCollapse }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { navItems } = useSidebarItems();
+  const items = useSidebarItems();
   const { handleSignOut } = useSignOut();
+  
+  // Map items to the format expected by SidebarContent
+  const navItems = items.map(item => ({
+    path: item.href,
+    icon: item.icon,
+    label: item.title
+  }));
   
   // Expand sidebar on larger screens by default
   useEffect(() => {

@@ -51,11 +51,13 @@ export function useUserModules() {
       
       if (profile) {
         setUserProfile(profile);
+        console.log("User profile fetched:", profile);
+        console.log("Current semester:", profile.semester);
         
-        // Fetch modules based on user profile
+        // Fetch modules based on user profile and semester
         let moduleQuery = supabase
           .from('modules')
-          .select('module_code, module_title, id');
+          .select('module_code, module_title, id, semester');
         
         if (profile.course_id) {
           moduleQuery = moduleQuery.eq('course_id', profile.course_id);
@@ -63,6 +65,7 @@ export function useUserModules() {
         
         if (profile.semester) {
           moduleQuery = moduleQuery.eq('semester', profile.semester);
+          console.log("Filtering modules by semester:", profile.semester);
         }
         
         const { data: moduleData, error: moduleError } = await moduleQuery;
@@ -72,23 +75,29 @@ export function useUserModules() {
           // Fall back to department-based filtering if module query fails
           let departmentModuleQuery = supabase
             .from('modules')
-            .select('module_code, module_title, id');
+            .select('module_code, module_title, id, semester');
             
           if (profile.department) {
-            departmentModuleQuery = departmentModuleQuery.ilike('module_code', `${profile.department.substring(0, 4)}%`);
+            departmentModuleQuery = departmentModuleQuery
+              .ilike('module_code', `${profile.department.substring(0, 4)}%`)
+              .eq('semester', profile.semester);
           }
           
           const { data: deptModuleData } = await departmentModuleQuery;
           
           if (deptModuleData && deptModuleData.length > 0) {
-            const formattedModules = deptModuleData.map(module => ({
-              id: module.id,
-              code: module.module_code,
-              name: module.module_title
-            }));
+            console.log(`Found ${deptModuleData.length} department modules for semester ${profile.semester}`);
+            const formattedModules = deptModuleData
+              .filter(module => module.semester === profile.semester)
+              .map(module => ({
+                id: module.id,
+                code: module.module_code,
+                name: module.module_title
+              }));
             setUserModules(formattedModules);
           } else {
             // Fallback to default modules
+            console.log("No modules found for the current semester, using defaults");
             setUserModules([
               { id: "COMP101-id", code: "COMP101", name: "Programming Fundamentals" },
               { id: "MATH202-id", code: "MATH202", name: "Advanced Mathematics" },
@@ -96,15 +105,24 @@ export function useUserModules() {
             ]);
           }
         } else if (moduleData && moduleData.length > 0) {
+          // Filter modules to only include those matching the user's semester
+          const semesterFilteredModules = moduleData.filter(module => 
+            module.semester === profile.semester
+          );
+          
+          console.log(`Found ${moduleData.length} modules, filtered to ${semesterFilteredModules.length} matching semester ${profile.semester}`);
+          
           // Format modules for the UI from successful query
-          const formattedModules = moduleData.map(module => ({
+          const formattedModules = semesterFilteredModules.map(module => ({
             id: module.id || `${module.module_code}-id`, // Ensure id is always defined
             code: module.module_code,
             name: module.module_title
           }));
+          
           setUserModules(formattedModules);
         } else {
           // Fallback to default modules if no modules found
+          console.log("No modules found for the current semester, using defaults");
           setUserModules([
             { id: "COMP101-id", code: "COMP101", name: "Programming Fundamentals" },
             { id: "MATH202-id", code: "MATH202", name: "Advanced Mathematics" },
@@ -123,9 +141,15 @@ export function useUserModules() {
     }
   };
 
+  // Add a function to refresh the modules, useful when semester changes
+  const refreshModules = () => {
+    fetchUserData();
+  };
+
   return {
     userModules,
     userProfile,
     isLoading,
+    refreshModules
   };
 }

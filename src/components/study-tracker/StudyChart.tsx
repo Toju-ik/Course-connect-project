@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, startOfWeek, addDays } from 'date-fns';
+import { Module } from '../../types/module';
 
 interface StudySession {
   id: string;
@@ -10,22 +11,16 @@ interface StudySession {
   date: string;
 }
 
-interface Module {
-  id: string;
-  module_code: string;
-  module_title: string;
-}
-
-interface StudyChartProps {
-  sessions: StudySession[];
-  modules: Module[];
-}
-
 interface ChartData {
   date: string;
   displayDate: string;
   total: number;
   [key: string]: any;
+}
+
+interface StudyChartProps {
+  sessions: StudySession[];
+  modules: any[]; // Accept any module format for compatibility
 }
 
 const StudyChart: React.FC<StudyChartProps> = ({ sessions, modules }) => {
@@ -91,7 +86,11 @@ const StudyChart: React.FC<StudyChartProps> = ({ sessions, modules }) => {
   const getModuleName = (moduleId: string) => {
     if (moduleId === 'default') return 'General Study';
     const module = modules.find(m => m.id === moduleId);
-    return module ? module.module_code : 'Unknown';
+    if (!module) return 'Unknown';
+    
+    // Handle different module object formats
+    const code = module.module_code || module.code || '';
+    return code;
   };
   
   const CustomTooltip = ({ active, payload, label }: any) => {

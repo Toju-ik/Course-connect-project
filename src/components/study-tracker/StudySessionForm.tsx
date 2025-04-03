@@ -1,11 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-
-interface Module {
-  id: string;
-  module_code: string;
-  module_title: string;
-}
+import { useUserModules } from '../../hooks/useUserModules';
+import { Module } from '../../types/module';
 
 interface StudySessionFormProps {
   modules: Module[];
@@ -31,6 +27,9 @@ const StudySessionForm: React.FC<StudySessionFormProps> = ({
   const [date, setDate] = useState(initialData?.date || new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState(initialData?.notes || '');
   
+  // Get the latest modules directly from the hook to ensure we have semester-filtered modules
+  const { userModules, userProfile } = useUserModules();
+  
   useEffect(() => {
     if (initialData) {
       setModuleId(initialData.module_id);
@@ -40,10 +39,21 @@ const StudySessionForm: React.FC<StudySessionFormProps> = ({
     }
   }, [initialData]);
   
+  // Log current semester and available modules for debugging
+  useEffect(() => {
+    if (userProfile) {
+      console.log("Current user semester in form:", userProfile.semester);
+      console.log("Available modules in form:", userModules);
+    }
+  }, [userProfile, userModules]);
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(moduleId, duration, date, notes);
   };
+  
+  // Use the modules passed from props first, but if we have direct access to filtered modules, use those
+  const displayModules = userModules.length > 0 ? userModules : modules;
   
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -58,9 +68,9 @@ const StudySessionForm: React.FC<StudySessionFormProps> = ({
           className="w-full p-2 border border-gray-300 rounded-md"
         >
           <option value="">General Study</option>
-          {modules.map((module) => (
+          {displayModules.map((module) => (
             <option key={module.id} value={module.id}>
-              {module.module_code}: {module.module_title}
+              {module.code}: {module.name}
             </option>
           ))}
         </select>

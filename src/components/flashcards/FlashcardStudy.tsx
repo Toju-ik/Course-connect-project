@@ -21,12 +21,18 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({ flashcards }) => {
 
   useEffect(() => {
     // Initialize study deck with the provided flashcards
-    setStudyDeck([...flashcards]);
-    setCurrentIndex(0);
-    setShowAnswer(false);
+    console.log('FlashcardStudy received flashcards:', flashcards);
+    if (flashcards && flashcards.length > 0) {
+      setStudyDeck([...flashcards]);
+      setCurrentIndex(0);
+      setShowAnswer(false);
+    } else {
+      // Set empty study deck if no flashcards provided
+      setStudyDeck([]);
+    }
   }, [flashcards]);
 
-  if (flashcards.length === 0) {
+  if (!flashcards || flashcards.length === 0) {
     return (
       <div className="text-center py-8 bg-white rounded-lg shadow-sm p-6">
         <p className="text-gray-500">No flashcards available for study.</p>
@@ -34,7 +40,25 @@ const FlashcardStudy: React.FC<FlashcardStudyProps> = ({ flashcards }) => {
     );
   }
 
+  // Only proceed if studyDeck has items
+  if (studyDeck.length === 0) {
+    return (
+      <div className="text-center py-8 bg-white rounded-lg shadow-sm p-6">
+        <p className="text-gray-500">Loading flashcards...</p>
+      </div>
+    );
+  }
+
   const currentCard = studyDeck[currentIndex];
+
+  // Safety check to make sure currentCard exists
+  if (!currentCard) {
+    return (
+      <div className="text-center py-8 bg-white rounded-lg shadow-sm p-6">
+        <p className="text-gray-500">Error loading flashcard. Please try again.</p>
+      </div>
+    );
+  }
 
   const shuffleCards = () => {
     const shuffled = [...studyDeck];

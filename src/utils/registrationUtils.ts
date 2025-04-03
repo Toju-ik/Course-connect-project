@@ -17,9 +17,10 @@ export const handleRegistration = async (
     console.log("Registration data being sent:", {
       email,
       courseId: updatedFormData.courseId,
-      academicYear: updatedFormData.academicYear || "",  // Ensure non-null strings
+      academicYear: updatedFormData.academicYear || "",
       semester: updatedFormData.semester || "",
-      moduleGroup: updatedFormData.moduleGroup || ""
+      moduleGroup: updatedFormData.moduleGroup || "",
+      phoneNumber: updatedFormData.phoneNumber || ""
     });
     
     // Sign up the user with Supabase
@@ -30,9 +31,10 @@ export const handleRegistration = async (
         data: {
           student_id: updatedFormData.studentId,
           department: updatedFormData.departmentName,
-          academic_year: updatedFormData.academicYear || "",  // Ensure non-null strings
+          academic_year: updatedFormData.academicYear || "",
           module_group: updatedFormData.moduleGroup || "",
-          semester: updatedFormData.semester || ""  // Ensure semester is included in metadata
+          semester: updatedFormData.semester || "",
+          phone_number: updatedFormData.phoneNumber || ""
         }
       }
     });
@@ -57,9 +59,10 @@ export const handleRegistration = async (
       const profileUpdatePayload = {
         course_id: courseId, // Use the UUID directly
         timetable_setup: false,
-        academic_year: updatedFormData.academicYear || "",  // Ensure values are strings, not null
+        academic_year: updatedFormData.academicYear || "",
         semester: updatedFormData.semester || "",
-        module_group: updatedFormData.moduleGroup || ""
+        module_group: updatedFormData.moduleGroup || "",
+        phone_number: updatedFormData.phoneNumber || ""
       };
       
       console.log("Updating profile with payload:", profileUpdatePayload);

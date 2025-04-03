@@ -1,0 +1,12 @@
+
+# Toggle Notifications Function Configuration
+# This function allows users to quickly toggle their SMS notification preferences
+
+# Memory and CPU settings for the function
+[functions.resource]
+memory = 128  # Memory limit in MB
+cpu = 125     # CPU limit (a value of 1000 represents 1 full CPU core)
+
+# Environment variable settings - these will be populated automatically
+[functions.envs]
+# No additional environment variables needed as these are already set at the project level

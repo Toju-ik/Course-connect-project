@@ -1,84 +1,68 @@
 
-import { useEffect, useState } from "react";
-import { BrowserRouter, Route, Routes, Outlet } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import { TimetableProvider } from "./contexts/TimetableContext";
-import { TimetablePromptProvider } from "./contexts/TimetablePromptContext";
-import { Toaster } from "sonner";
-
-import SplashScreen from "./components/splash/SplashScreen";
-import { ProtectedRoute } from "./components/auth/ProtectedRoute";
-import { PublicRoute } from "./components/auth/PublicRoute";
-
-// Pages
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Timetable from "./pages/Timetable";
-import TimetableSetup from "./pages/TimetableSetup";
-import Dashboard from "./pages/Dashboard";
-import Tasks from "./pages/Tasks";
-import ArchivedTasks from "./pages/ArchivedTasks";
-import Flashcards from "./pages/Flashcards";
-import StudyTracker from "./pages/StudyTracker";
-import FocusTimer from "./pages/FocusTimer";
-import Profile from "./pages/Profile";
-import ProfileTest from "./pages/ProfileTest";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import ModuleSelectionTest from "./pages/ModuleSelectionTest";
-
-import "./App.css";
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './components/ui/theme-provider';
+import { AuthProvider } from './contexts/AuthContext';
+import Index from './pages/Index';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Tasks from './pages/Tasks';
+import ArchivedTasks from './pages/ArchivedTasks';
+import Timetable from './pages/Timetable';
+import TimetableSetup from './pages/TimetableSetup';
+import Profile from './pages/Profile';
+import StudyTracker from './pages/StudyTracker';
+import Flashcards from './pages/Flashcards';
+import FocusTimer from './pages/FocusTimer';
+import Settings from './pages/Settings';
+import Collaboration from './pages/Collaboration';
+import NotFound from './pages/NotFound';
+import { PublicRoute } from './components/routes/PublicRoute';
+import { ProtectedRoute } from './components/routes/ProtectedRoute';
+import { Toaster } from "@/components/ui/toaster"
+import Friends from './pages/Friends';
+import FriendSearchTest from './pages/FriendSearchTest';
 
 function App() {
-  const [showSplash, setShowSplash] = useState<boolean>(true);
-
-  useEffect(() => {
-    // Skip splash screen for development if needed
-    // setShowSplash(false); 
-  }, []);
-
-  if (showSplash) {
-    return <SplashScreen onFinished={() => setShowSplash(false)} duration={3000} />;
-  }
+  const queryClient = new QueryClient();
 
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <TimetableProvider>
-          <TimetablePromptProvider>
-            <Toaster position="top-center" richColors />
-            <Routes>
-              {/* Public routes */}
-              <Route element={<PublicRoute><Outlet /></PublicRoute>}>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-              </Route>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* Authentication Routes */}
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Route>
 
-              {/* Protected routes */}
-              <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/timetable" element={<Timetable />} />
-                <Route path="/timetable-setup" element={<TimetableSetup />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/archived-tasks" element={<ArchivedTasks />} />
-                <Route path="/flashcards" element={<Flashcards />} />
-                <Route path="/study-tracker" element={<StudyTracker />} />
-                <Route path="/focus-timer" element={<FocusTimer />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/profile-test" element={<ProfileTest />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/module-selection-test" element={<ModuleSelectionTest />} />
-              </Route>
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/tasks" element={<Tasks />} />
+              <Route path="/archived-tasks" element={<ArchivedTasks />} />
+              <Route path="/timetable" element={<Timetable />} />
+              <Route path="/timetable-setup" element={<TimetableSetup />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/study-tracker" element={<StudyTracker />} />
+              <Route path="/flashcards" element={<Flashcards />} />
+              <Route path="/focus-timer" element={<FocusTimer />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/collaboration" element={<Collaboration />} />
+              <Route path="/friends" element={<Friends />} />
+              <Route path="/test/friend-search" element={<FriendSearchTest />} />
+            </Route>
 
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TimetablePromptProvider>
-        </TimetableProvider>
-      </AuthProvider>
-    </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }
 

@@ -25,7 +25,7 @@ const WelcomeScreen = ({ onStart }: WelcomeScreenProps) => {
       <div className="text-center space-y-6 max-w-md mx-auto flex flex-col items-center">
         <h1 className="text-2xl font-bold text-gray-900">Create Your Account</h1>
         <p className="text-gray-600">
-          Welcome to StudyBuddy! You're about to complete a 5-step registration process to set up your profile.
+          Welcome to Course Connect! You're about to complete a 5-step registration process to set up your profile.
         </p>
         
         <div className="flex flex-col items-center space-y-3 mt-6">

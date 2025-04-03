@@ -40,13 +40,13 @@ export const SidebarContent = ({
   useEffect(() => {
     if (user) {
       const getProfile = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('student_id, full_name, avatar_url')
           .eq('id', user.id)
           .single();
         
-        if (data) {
+        if (data && !error) {
           setProfile(data);
           
           if (data.avatar_url) {

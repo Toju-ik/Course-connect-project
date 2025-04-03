@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-
-interface Module {
-  id: string;
-  module_code: string;
-  module_title: string;
-}
+import { useUserModules } from '../../hooks/useUserModules';
+import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'sonner';
+import { Module } from '../../types/module';
 
 interface FlashcardFormProps {
-  modules: Module[];
   initialData?: {
     id?: string;
     question: string;
@@ -17,30 +14,57 @@ interface FlashcardFormProps {
   };
   onSubmit: (question: string, answer: string, moduleId: string | null) => void;
   onCancel: () => void;
+  selectedModuleId?: string | null;
 }
 
 const FlashcardForm: React.FC<FlashcardFormProps> = ({
-  modules,
   initialData,
   onSubmit,
-  onCancel
+  onCancel,
+  selectedModuleId
 }) => {
   const [question, setQuestion] = useState(initialData?.question || '');
   const [answer, setAnswer] = useState(initialData?.answer || '');
-  const [moduleId, setModuleId] = useState<string | null>(initialData?.module_id || null);
+  const [moduleId, setModuleId] = useState<string | null>(initialData?.module_id || selectedModuleId || null);
+  const { userModules, isLoading } = useUserModules();
+  const { user } = useAuth();
   
   useEffect(() => {
     if (initialData) {
       setQuestion(initialData.question);
       setAnswer(initialData.answer);
       setModuleId(initialData.module_id || null);
+    } else if (selectedModuleId) {
+      setModuleId(selectedModuleId);
     }
-  }, [initialData]);
+  }, [initialData, selectedModuleId]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!question.trim()) {
+      toast.error('Question is required');
+      return;
+    }
+    
+    if (!answer.trim()) {
+      toast.error('Answer is required');
+      return;
+    }
+    
+    console.log('Submitting flashcard:', { question, answer, moduleId });
     onSubmit(question, answer, moduleId);
   };
+  
+  if (!user) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-red-500">You must be logged in to create flashcards</p>
+      </div>
+    );
+  }
+  
+  const selectedModule = userModules.find(module => module.id === selectedModuleId);
   
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,24 +96,42 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
         />
       </div>
       
-      <div>
-        <label htmlFor="module" className="block text-sm font-medium text-gray-700 mb-1">
-          Module (Optional)
-        </label>
-        <select
-          id="module"
-          value={moduleId || ''}
-          onChange={(e) => setModuleId(e.target.value || null)}
-          className="w-full p-2 border border-gray-300 rounded-md"
-        >
-          <option value="">No Module</option>
-          {modules.map((module) => (
-            <option key={module.id} value={module.id}>
-              {module.module_code}: {module.module_title}
-            </option>
-          ))}
-        </select>
-      </div>
+      {selectedModuleId ? (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Module
+          </label>
+          <div className="p-2 border border-gray-200 bg-gray-50 rounded-md">
+            {selectedModule ? `${selectedModule.code}: ${selectedModule.name}` : 'No Module'}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Using the module selected in the filter
+          </p>
+        </div>
+      ) : (
+        <div>
+          <label htmlFor="module" className="block text-sm font-medium text-gray-700 mb-1">
+            Module (Optional)
+          </label>
+          <select
+            id="module"
+            value={moduleId || ''}
+            onChange={(e) => setModuleId(e.target.value || null)}
+            className="w-full p-2 border border-gray-300 rounded-md"
+            disabled={isLoading}
+          >
+            <option value="">No Module</option>
+            {userModules.map((module: Module) => (
+              <option key={module.id} value={module.id}>
+                {module.code}: {module.name}
+              </option>
+            ))}
+          </select>
+          {isLoading && (
+            <p className="text-xs text-gray-500 mt-1">Loading modules...</p>
+          )}
+        </div>
+      )}
       
       <div className="flex justify-end space-x-2 pt-4">
         <button

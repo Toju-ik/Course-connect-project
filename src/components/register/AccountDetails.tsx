@@ -8,18 +8,21 @@ interface AccountDetailsProps {
   initialValues?: {
     studentId: string;
     password: string;
+    phoneNumber?: string;
   };
-  onSubmit: (studentId: string, password: string) => void;
+  onSubmit: (studentId: string, password: string, phoneNumber: string) => void;
 }
 
 const AccountDetails = ({ initialValues, onSubmit }: AccountDetailsProps) => {
   const [studentId, setStudentId] = useState(initialValues?.studentId || "");
   const [password, setPassword] = useState(initialValues?.password || "");
   const [confirmPassword, setConfirmPassword] = useState(initialValues?.password || "");
+  const [phoneNumber, setPhoneNumber] = useState(initialValues?.phoneNumber || "");
   const [errors, setErrors] = useState({
     studentId: "",
     password: "",
     confirmPassword: "",
+    phoneNumber: "",
   });
   const [isCheckingId, setIsCheckingId] = useState(false);
 
@@ -29,8 +32,18 @@ const AccountDetails = ({ initialValues, onSubmit }: AccountDetailsProps) => {
       setStudentId(initialValues.studentId || "");
       setPassword(initialValues.password || "");
       setConfirmPassword(initialValues.password || "");
+      setPhoneNumber(initialValues.phoneNumber || "");
     }
   }, [initialValues]);
+
+  const validatePhoneNumber = (phone: string) => {
+    if (!phone) return ""; // Phone is optional
+    // Basic validation for international format
+    if (!phone.match(/^\+?[0-9]{10,15}$/)) {
+      return "Phone number should be in international format (e.g., +353891234567)";
+    }
+    return "";
+  };
 
   const validate = async () => {
     let newErrors = {
@@ -43,6 +56,7 @@ const AccountDetails = ({ initialValues, onSubmit }: AccountDetailsProps) => {
       confirmPassword: password !== confirmPassword
         ? "Passwords do not match"
         : "",
+      phoneNumber: validatePhoneNumber(phoneNumber),
     };
 
     if (!newErrors.studentId) {
@@ -72,7 +86,7 @@ const AccountDetails = ({ initialValues, onSubmit }: AccountDetailsProps) => {
 
   const handleSubmit = async () => {
     if (await validate()) {
-      onSubmit(studentId, password);
+      onSubmit(studentId, password, phoneNumber);
     }
   };
 
@@ -136,6 +150,25 @@ const AccountDetails = ({ initialValues, onSubmit }: AccountDetailsProps) => {
               {errors.confirmPassword}
             </p>
           )}
+        </div>
+
+        <div>
+          <input
+            type="tel"
+            placeholder="Phone Number (Optional, e.g. +353891234567)"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            className={`w-full py-3 px-4 bg-gray-100 border border-gray-200 rounded-lg ${errors.phoneNumber ? 'border-red-500' : ''}`}
+          />
+          {errors.phoneNumber && (
+            <p className="mt-1 text-sm text-red-600 flex items-center">
+              <AlertCircle className="w-4 h-4 mr-1" />
+              {errors.phoneNumber}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">
+            Enter your phone number in international format for SMS notifications (optional)
+          </p>
         </div>
       </div>
 

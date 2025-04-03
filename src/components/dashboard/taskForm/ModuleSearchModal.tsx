@@ -9,7 +9,7 @@ interface ModuleSearchModalProps {
   modules: Module[];
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onSelectModule: (moduleCode: string) => void;
+  onSelectModule: (moduleId: string) => void;
   onClose: () => void;
 }
 
@@ -20,6 +20,14 @@ const ModuleSearchModal = ({
   onSelectModule,
   onClose,
 }: ModuleSearchModalProps) => {
+  // Create a deduplicated list of modules using a Map with ID as the key
+  const uniqueModules = Array.from(
+    modules.reduce((map, module) => {
+      map.set(module.id, module);
+      return map;
+    }, new Map<string, Module>()).values()
+  );
+
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-md overflow-hidden animate-slide-up-sheet">
@@ -51,12 +59,12 @@ const ModuleSearchModal = ({
         </div>
         
         <div className="max-h-[40vh] overflow-y-auto">
-          {modules.length > 0 ? (
-            modules.map(module => (
+          {uniqueModules.length > 0 ? (
+            uniqueModules.map(module => (
               <div
                 key={module.id}
                 className="p-4 hover:bg-gray-100 active:bg-gray-200 cursor-pointer border-b border-gray-100"
-                onClick={() => onSelectModule(module.code)}
+                onClick={() => onSelectModule(module.id)}
               >
                 <div className="font-medium">{module.code}</div>
                 <div className="text-sm text-gray-600 truncate">{module.name}</div>

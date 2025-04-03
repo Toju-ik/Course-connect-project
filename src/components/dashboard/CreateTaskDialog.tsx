@@ -5,99 +5,152 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useToast } from "../../hooks/use-toast";
 import PrioritySelector from "./taskForm/PrioritySelector";
-import ModuleSelector from "./taskForm/ModuleSelector";
-import ModuleSearchModal from "./taskForm/ModuleSearchModal";
 import { Module } from "../../types/module";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 interface Task {
   title: string;
   description: string;
-  module?: string;
+  module_id?: string;
   dueDate?: string;
   status: "todo" | "in-progress" | "completed";
   priority?: "low" | "medium" | "high";
+  taskType?: string;
 }
 
 interface CreateTaskDialogProps {
   isOpen: boolean;
   onClose: (open: boolean) => void;
-  onCreateTask: (task: Task) => void;
+  onCreateTask: (task: Task) => Promise<Task | true | false | null>;
   modules: Module[];
   initialData?: Task;
+  selectedModuleId?: string;
 }
 
-const CreateTaskDialog = ({ isOpen, onClose, onCreateTask, modules: providedModules, initialData }: CreateTaskDialogProps) => {
+const CreateTaskDialog = ({ 
+  isOpen, 
+  onClose, 
+  onCreateTask, 
+  modules, 
+  initialData, 
+  selectedModuleId 
+}: CreateTaskDialogProps) => {
   const [formData, setFormData] = useState<Task>({
     title: "",
     description: "",
-    module: "",
+    module_id: "",
     dueDate: "",
     status: "todo",
-    priority: "medium"
+    priority: "medium",
+    taskType: "assignment"
   });
-  const [filteredModules, setFilteredModules] = useState<Module[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showModuleSearch, setShowModuleSearch] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
+      console.log("[CreateTaskDialog] Dialog opened, initialData:", initialData, "selectedModuleId:", selectedModuleId);
       if (initialData) {
         setFormData(initialData);
       } else {
-        resetForm();
+        // Reset form and set selected module if provided
+        setFormData({
+          title: "",
+          description: "",
+          module_id: selectedModuleId || "",
+          dueDate: "",
+          status: "todo",
+          priority: "medium",
+          taskType: "assignment"
+        });
       }
-      setFilteredModules(providedModules);
+      setIsSubmitting(false);
     }
-  }, [initialData, isOpen, providedModules]);
+  }, [initialData, isOpen, selectedModuleId]);
 
-  const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      module: "",
-      dueDate: "",
-      status: "todo",
-      priority: "medium"
-    });
-    setSearchQuery("");
-    setShowModuleSearch(false);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting task data:", formData);
-    onCreateTask(formData);
-    onClose(false);
-    resetForm();
-  };
-
-  const handleModuleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim() === "") {
-      setFilteredModules(providedModules);
+    console.log("[CreateTaskDialog] Form submitted with data:", formData);
+    
+    // Prevent double submission
+    if (isSubmitting) {
+      console.log("[CreateTaskDialog] Form submission already in progress, preventing duplicate");
       return;
     }
-    const filtered = providedModules
-      .filter(module =>
-        module.code.toLowerCase().includes(query.toLowerCase()) ||
-        module.name.toLowerCase().includes(query.toLowerCase())
-      );
-    setFilteredModules(filtered);
-  };
-
-  const selectModule = (moduleCode: string) => {
-    setFormData(prev => ({ ...prev, module: moduleCode }));
-    setShowModuleSearch(false);
-  };
-
-  const getModuleNameByCode = (code: string): string => {
-    const module = providedModules.find(m => m.code === code);
-    return module ? module.name : "";
+    
+    setIsSubmitting(true);
+    
+    // Check if title is provided
+    if (!formData.title.trim()) {
+      console.log("[CreateTaskDialog] Form submission failed: Title is required");
+      toast({
+        title: "Title required",
+        description: "Please enter a title for your task",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Check if a module is selected or use the board's selected module
+    const moduleId = formData.module_id || selectedModuleId;
+    if (!moduleId) {
+      console.log("[CreateTaskDialog] Form submission failed: No module selected");
+      toast({
+        title: "Module required",
+        description: "Please select a module in the board filter first",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Use the module from board filter if task doesn't have one
+    const taskData = {
+      ...formData,
+      module_id: moduleId
+    };
+    
+    console.log("[CreateTaskDialog] Submitting task data:", taskData);
+    try {
+      const result = await onCreateTask(taskData);
+      console.log("[CreateTaskDialog] Task creation result:", result);
+      
+      // Fix: Only check truthiness on non-void return values
+      if (result === true || (result !== false && result !== null)) {
+        console.log("[CreateTaskDialog] Task created successfully, closing dialog");
+        onClose(false);
+      } else {
+        console.log("[CreateTaskDialog] Task creation failed or returned null");
+        // The toast will be shown by the useTaskCrud hook
+      }
+    } catch (error) {
+      console.error("[CreateTaskDialog] Error creating task:", error);
+      toast({
+        title: "Error creating task",
+        description: "An error occurred while creating the task",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePriorityChange = (priority: "low" | "medium" | "high") => {
     setFormData(prev => ({ ...prev, priority }));
+  };
+
+  const getModuleNameById = (moduleId: string): string => {
+    const module = modules.find(m => m.id === moduleId);
+    return module ? `${module.code}: ${module.name}` : "";
   };
 
   return (
@@ -143,12 +196,43 @@ const CreateTaskDialog = ({ isOpen, onClose, onCreateTask, modules: providedModu
                 />
               </div>
               
-              {/* Module Selection */}
-              <ModuleSelector 
-                selectedModule={formData.module || ""} 
-                moduleDisplayName={getModuleNameByCode(formData.module || "")}
-                onClick={() => setShowModuleSearch(true)}
-              />
+              {/* Module Information (read-only) */}
+              {(selectedModuleId || formData.module_id) && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Module</Label>
+                  <div className="px-4 py-3 rounded-lg border border-gray-200 bg-gray-50">
+                    <span className="font-medium">
+                      {getModuleNameById(selectedModuleId || formData.module_id || "")}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Task Type */}
+              <div className="space-y-2">
+                <Label htmlFor="taskType" className="text-sm font-medium">Task Type</Label>
+                <div className="relative">
+                  <Select
+                    value={formData.taskType}
+                    onValueChange={(value) => setFormData({ ...formData, taskType: value })}
+                  >
+                    <SelectTrigger className="w-full h-12 text-base">
+                      <SelectValue placeholder="Select task type" />
+                    </SelectTrigger>
+                    <SelectContent 
+                      className="z-[100] bg-white border border-gray-200 shadow-lg"
+                      position="popper"
+                    >
+                      <SelectItem value="assignment">Assignment</SelectItem>
+                      <SelectItem value="project">Project</SelectItem>
+                      <SelectItem value="practical">Practical</SelectItem>
+                      <SelectItem value="reading">Reading</SelectItem>
+                      <SelectItem value="exam">Exam Preparation</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               
               {/* Due Date */}
               <div className="space-y-2">
@@ -199,22 +283,16 @@ const CreateTaskDialog = ({ isOpen, onClose, onCreateTask, modules: providedModu
             <Button 
               type="submit" 
               className="w-full h-12 text-base sm:order-2"
+              disabled={isSubmitting}
             >
-              {initialData ? "Save Changes" : "Create Task"}
+              {isSubmitting 
+                ? (initialData ? "Saving..." : "Creating...") 
+                : (initialData ? "Save Changes" : "Create Task")
+              }
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
-      
-      {showModuleSearch && (
-        <ModuleSearchModal 
-          modules={filteredModules}
-          searchQuery={searchQuery}
-          onSearchChange={handleModuleSearch}
-          onSelectModule={selectModule}
-          onClose={() => setShowModuleSearch(false)}
-        />
-      )}
     </Dialog>
   );
 };

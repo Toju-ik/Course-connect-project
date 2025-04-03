@@ -1,45 +1,40 @@
-import { Home, ListTodo, Timer, BookOpen, BarChart } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, ListTodo, Calendar, UserPlus, Users } from 'lucide-react';
 
 const BottomNavigation = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const currentPath = location.pathname;
 
-  const isActive = (path: string) => currentPath === path;
-
-  const navItems = [
-    { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: ListTodo, label: "Tasks", path: "/tasks" },
-    { icon: Timer, label: "Focus", path: "/focus-timer" },
-    { icon: BookOpen, label: "Cards", path: "/flashcards" },
-    { icon: BarChart, label: "Stats", path: "/study-tracker" },
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+  
+  const links = [
+    { to: "/dashboard", icon: <LayoutDashboard className="h-5 w-5" />, label: "Dashboard" },
+    { to: "/tasks", icon: <ListTodo className="h-5 w-5" />, label: "Tasks" },
+    { to: "/timetable", icon: <Calendar className="h-5 w-5" />, label: "Timetable" },
+    { to: "/collaboration", icon: <UserPlus className="h-5 w-5" />, label: "Groups" },
+    { to: "/friends", icon: <Users className="h-5 w-5" />, label: "Friends" }
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-indigo-600 border-t border-indigo-700">
-      <div className="flex items-center justify-around h-16">
-        {navItems.map((item) => {
-          const active = isActive(item.path);
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center w-full h-full transition-all ${
-                active ? "text-white font-semibold scale-105" : "text-indigo-200"
-              }`}
-            >
-              <item.icon
-                className={`w-6 h-6 transition-colors ${
-                  active ? "text-white" : "text-indigo-200"
-                }`}
-              />
-              <span className="text-xs mt-1">{item.label}</span>
-            </button>
-          );
-        })}
+    <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 py-2 px-4 md:hidden">
+      <div className="flex justify-between items-center">
+        {links.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={`flex flex-col items-center justify-center ${
+              isActive(link.to) ? 'text-primary' : 'text-gray-500'
+            }`}
+          >
+            {link.icon}
+            <span className="text-xs">{link.label}</span>
+          </Link>
+        ))}
       </div>
-    </nav>
+    </div>
   );
 };
 

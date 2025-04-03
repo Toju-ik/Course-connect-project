@@ -50,17 +50,31 @@ const ArchivedTasks = () => {
         throw error;
       }
 
-      // Transform data to match the expected interface
-      const formattedTasks = data.map(task => ({
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        module: task.module_id,
-        dueDate: task.due_date,
-        priority: task.priority,
-        archived_at: task.archived_at
-      }));
+      // Transform data to match the expected interface with proper typing
+      const formattedTasks: ArchivedTask[] = data.map(task => {
+        // Normalize status to ensure it's one of the allowed values
+        let normalizedStatus: "todo" | "in-progress" | "completed" = "todo";
+        if (task.status === "in-progress" || task.status === "completed") {
+          normalizedStatus = task.status;
+        }
+
+        // Normalize priority to ensure it's one of the allowed values or undefined
+        let normalizedPriority: "low" | "medium" | "high" | undefined = undefined;
+        if (task.priority === "low" || task.priority === "medium" || task.priority === "high") {
+          normalizedPriority = task.priority;
+        }
+
+        return {
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          status: normalizedStatus,
+          module: task.module_id,
+          dueDate: task.due_date,
+          priority: normalizedPriority,
+          archived_at: task.archived_at
+        };
+      });
 
       setArchivedTasks(formattedTasks);
     } catch (error: any) {

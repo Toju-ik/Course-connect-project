@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, BookOpen, Users, Calendar } from "lucide-react";
+import { ChevronRight, BookOpen, Users, Calendar, Clock, Star, NotebookPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Index = () => {
@@ -11,24 +10,45 @@ const Index = () => {
     {
       icon: BookOpen,
       title: "Course Management",
-      description: "Organize your academic life with our intuitive course management system",
+      description: "Effortlessly manage your modules and assignments using our intuitive course system.",
       color: "bg-blue-100",
       iconColor: "text-blue-600"
     },
     {
       icon: Users,
       title: "Collaborative Learning",
-      description: "Work together with classmates on projects in study groups",
+      description: "Collaborate with peers through group workspaces, discussion boards, and shared resources.",
       color: "bg-purple-100",
       iconColor: "text-purple-600"
     },
     {
       icon: Calendar,
       title: "Smart Scheduling",
-      description: "Never miss a deadline with our integrated calendar system",
+      description: "Stay organised and never miss a deadline with our intelligent calendar and reminders.",
       color: "bg-green-100",
       iconColor: "text-green-600"
     },
+    {
+      icon: Clock,
+      title: "Focus Timer",
+      description: "Boost concentration using our built-in Pomodoro-style focus timer for productive study sessions.",
+      color: "bg-yellow-100",
+      iconColor: "text-yellow-600"
+    },
+    {
+      icon: Star,
+      title: "Study Tracker",
+      description: "Monitor your study progress and set academic goals to stay on top of your performance.",
+      color: "bg-pink-100",
+      iconColor: "text-pink-600"
+    },
+    {
+      icon: NotebookPen,
+      title: "Study Flashcards",
+      description: "Create and revise using interactive flashcards to retain information more effectively.",
+      color: "bg-indigo-100",
+      iconColor: "text-indigo-600"
+    }
   ];
 
   return (
@@ -42,10 +62,7 @@ const Index = () => {
             transition={{ duration: 0.6 }}
             className="mx-auto max-w-4xl font-display text-5xl font-medium tracking-tight text-slate-900 sm:text-7xl"
           >
-            Welcome to{" "}
-            <span className="relative whitespace-nowrap text-primary">
-              <span className="relative">Course Connect</span>
-            </span>
+            Welcome to <span className="relative whitespace-nowrap text-primary"><span className="relative">Course Connect</span></span>
           </motion.h1>
           
           <motion.p 
@@ -54,7 +71,7 @@ const Index = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mt-6 max-w-2xl text-lg tracking-tight text-slate-700"
           >
-            Organize Your University Life - A modern platform designed to enhance your academic journey through seamless collaboration and productivity tools.
+            Organise your university life — a modern platform built to empower students through seamless collaboration, focused study, and effective planning tools.
           </motion.p>
 
           <motion.div 
@@ -113,7 +130,7 @@ const Index = () => {
               transition={{ duration: 0.6 }}
               className="text-3xl font-bold tracking-tight text-primary sm:text-4xl"
             >
-              Everything you need to excel
+              All-in-one tools for student success
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0 }}
@@ -122,7 +139,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-4 text-lg text-gray-600"
             >
-              Streamline your academic journey with our comprehensive set of tools
+              Explore a suite of features designed to help you study smarter, stay focused, and achieve your academic goals.
             </motion.p>
           </div>
 
@@ -133,7 +150,7 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.2 }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
                 whileHover={{ y: -5 }}
                 className="bg-white rounded-xl shadow-md p-8 transition-all hover:shadow-lg border border-gray-100"
               >

@@ -2,21 +2,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
-import { VitePWA } from 'vite-plugin-pwa';
 
+import { VitePWA } from 'vite-plugin-pwa';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
     allowedHosts: [
-      'cd3edd8a-c453-45b0-aeb9-05dbf07ba490.lovableproject.com'
+      'cd3edd8a-c453-45b0-aeb9-05dbf07ba490.example.com' // updated to a generic domain
     ]
   },
   plugins: [
     react(),
-    mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
@@ -87,3 +85,4 @@ export default defineConfig(({ mode }) => ({
     },
   },
 }));
+

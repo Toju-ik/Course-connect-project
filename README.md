@@ -95,7 +95,7 @@ Course Connect is a fast, installable PWA tailored to support student life at TU
 ## Performance & Quality Assurance
 
 - **Jest & React Testing Library** for unit and integration testing
-- **Cypress** for end-to-end test scenarios
+- **Playwright** for end-to-end test scenarios
 - **Lighthouse CI Metrics**:
 
 ---
